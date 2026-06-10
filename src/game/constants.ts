@@ -9,6 +9,9 @@ export const HARPOON_SPEED = 10
 
 export const GRAVITY = 0.2
 
+export const INITIAL_LIVES = 3
+export const INVINCIBLE_FRAMES = 120
+
 export const BALLOON_CONFIG = {
   LARGE:  { radius: 40, vx: 0.8, bounceVy: 14, color: '#e74c3c' },
   MEDIUM: { radius: 28, vx: 1.1, bounceVy: 11, color: '#e67e22' },
