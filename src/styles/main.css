@@ -1,0 +1,166 @@
+.main-screen {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: #0a0a2e;
+  overflow: hidden;
+}
+
+/* 타이틀 */
+.main-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 4.5rem;
+  color: #FFD700;
+  text-shadow:
+    0 0 10px rgba(255, 215, 0, 0.8),
+    0 0 30px rgba(255, 215, 0, 0.4),
+    4px 4px 0px #b8860b;
+  margin-bottom: 24px;
+  letter-spacing: 0.2em;
+}
+
+/* 메뉴 버튼 */
+.menu-button {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.9rem;
+  color: #ffffff;
+  background: transparent;
+  border: 2px solid #ffffff;
+  padding: 16px 32px;
+  width: 300px;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.menu-button:hover,
+.menu-button--selected {
+  color: #FFD700;
+  border-color: #FFD700;
+  transform: scale(1.05);
+}
+
+.menu-button__cursor {
+  display: inline-block;
+  width: 1em;
+  margin-right: 10px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* HOW TO PLAY 모달 오버레이 */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-box {
+  background: #1a1a4e;
+  border: 2px solid #ffffff;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  min-width: 420px;
+}
+
+.modal-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1rem;
+  color: #FFD700;
+  letter-spacing: 0.1em;
+}
+
+.modal-content {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.65rem;
+  color: #ffffff;
+  line-height: 2.4;
+  text-align: left;
+  width: 100%;
+}
+
+.modal-content .key {
+  color: #FFD700;
+}
+
+.modal-divider {
+  width: 100%;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-close-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  color: #ffffff;
+  background: transparent;
+  border: 2px solid #ffffff;
+  padding: 10px 28px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.modal-close-btn:hover {
+  color: #FFD700;
+  border-color: #FFD700;
+  transform: scale(1.05);
+}
+
+/* 배경 풍선 */
+.balloon-background {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.balloon {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.35;
+}
+
+.balloon::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 9px solid currentColor;
+}
+
+@keyframes float {
+  0%   { transform: translateY(0px) rotate(-4deg); }
+  50%  { transform: translateY(-22px) rotate(4deg); }
+  100% { transform: translateY(0px) rotate(-4deg); }
+}
+
+/* 메인 컨텐츠가 배경 위에 오도록 */
+.main-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}

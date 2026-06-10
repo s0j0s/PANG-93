@@ -1,9 +1,11 @@
-function App() {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <h1>Hello World</h1>
-    </div>
-  )
-}
+import { useState } from 'react'
+import MainScreen from './screens/MainScreen'
+import GameScreen from './screens/GameScreen'
 
-export default App
+export default function App() {
+  const [screen, setScreen] = useState<'main' | 'game'>('main')
+
+  return screen === 'main'
+    ? <MainScreen onStart={() => setScreen('game')} />
+    : <GameScreen onExit={() => setScreen('main')} />
+}

@@ -1,0 +1,17 @@
+.game-screen {
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-canvas {
+  display: block;
+  /* 비율(3:4) 유지하며 뷰포트에 맞게 스케일 */
+  max-height: 100vh;
+  max-width: calc(100vh * 0.75);
+  width: 100%;
+  image-rendering: pixelated;
+}
