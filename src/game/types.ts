@@ -14,3 +14,9 @@ export interface Balloon {
   radius: number
   color: string
 }
+
+export interface Harpoon {
+  x: number
+  y: number
+  baseY: number
+}

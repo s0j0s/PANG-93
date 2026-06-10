@@ -5,6 +5,7 @@ export const FLOOR_H = 40
 export const FLOOR_Y = CANVAS_H - FLOOR_H
 
 export const PLAYER_SPEED = 3
+export const HARPOON_SPEED = 10
 
 export const GRAVITY = 0.2
 
