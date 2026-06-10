@@ -4,7 +4,7 @@ import { drawBackground } from '../game/drawBackground'
 import { drawPlayer, PLAYER_H, PLAYER_W } from '../game/drawPlayer'
 import { drawBalloon } from '../game/drawBalloon'
 import { drawHarpoon } from '../game/drawHarpoon'
-import { createBalloon, updateBalloon } from '../game/balloon'
+import { createBalloon, updateBalloon, isHit, splitBalloon } from '../game/balloon'
 import { createHarpoon, updateHarpoon } from '../game/harpoon'
 import { useKeys } from '../game/useKeys'
 import type { Player, Balloon, Harpoon } from '../game/types'
@@ -63,7 +63,18 @@ export default function GameScreen({ onExit }: Props) {
 
       if (harpoonRef.current) {
         const done = updateHarpoon(harpoonRef.current)
-        if (done) harpoonRef.current = null
+        if (done) {
+          harpoonRef.current = null
+        } else {
+          const h = harpoonRef.current
+          const balloons = balloonsRef.current
+          const hitIdx = balloons.findIndex(b => isHit(h, b))
+          if (hitIdx !== -1) {
+            const children = splitBalloon(balloons[hitIdx])
+            balloons.splice(hitIdx, 1, ...children)
+            harpoonRef.current = null
+          }
+        }
       }
     }
 
