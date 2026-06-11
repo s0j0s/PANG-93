@@ -62,7 +62,7 @@ export const ITEM_CONFIG: Record<ItemType, { color: string; label: string }> = {
 
 ```ts
 export function createItem(type: ItemType, x: number, y: number): Item
-export function updateItem(item: Item): boolean  // true = 바닥 닿아 소멸
+export function updateItem(item: Item): void  // 바닥 도달 시 멈춤, 줍거나 스테이지 전환까지 유지
 export function isPickedUp(item: Item, player: Player): boolean
 export function drawItem(ctx, item: Item): void
 ```
@@ -72,7 +72,11 @@ export function drawItem(ctx, item: Item): void
 ```ts
 item.vy += ITEM_GRAVITY
 item.y  += item.vy
-return item.y >= FLOOR_Y  // 바닥 도달 시 소멸
+// 바닥 도달 시 멈춤 — 소멸하지 않고 플레이어가 줍거나 스테이지 전환까지 대기
+if (item.y + ITEM_SIZE / 2 >= FLOOR_Y) {
+  item.y  = FLOOR_Y - ITEM_SIZE / 2
+  item.vy = 0
+}
 ```
 
 ### isPickedUp
@@ -178,8 +182,7 @@ if (effectRef.current) {
 
 ```ts
 itemsRef.current = itemsRef.current.filter(item => {
-  const done = updateItem(item)
-  if (done) return false  // 바닥 도달 → 제거
+  updateItem(item)
 
   if (isPickedUp(item, p)) {
     applyEffect(item.type)
@@ -334,4 +337,4 @@ src/
 - **FORCEFIELD**: 기존 invincibleRef 재사용 (300프레임)
 - **TWIN_HARPOON**: harpoonRef → harpoonsRef 배열 교체, 최대 2발 동시 (600프레임)
 - **아이템 렌더링**: 28px 컬러 사각형 + 3자리 라벨 (SLW/FRZ/DYN/SHD/x2W)
-- **바닥 도달 시 소멸**: 줍지 않으면 사라짐
+- **바닥 도달 시 정지**: 바닥에서 대기, 플레이어가 줍거나 스테이지 전환 시 제거

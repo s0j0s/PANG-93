@@ -264,7 +264,7 @@ export default function GameScreen({ onExit }: Props) {
 
       // 아이템 업데이트 및 획득 판정
       itemsRef.current = itemsRef.current.filter(item => {
-        if (updateItem(item)) return false   // 바닥 도달
+        updateItem(item)
         if (isPickedUp(item, p)) {
           applyEffect(item.type)
           return false

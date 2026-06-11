@@ -6,10 +6,13 @@ export function createItem(type: ItemType, x: number, y: number): Item {
   return { x, y, vy: 0, type }
 }
 
-export function updateItem(item: Item): boolean {
+export function updateItem(item: Item): void {
   item.vy += ITEM_GRAVITY
   item.y  += item.vy
-  return item.y - ITEM_SIZE / 2 >= FLOOR_Y
+  if (item.y + ITEM_SIZE / 2 >= FLOOR_Y) {
+    item.y  = FLOOR_Y - ITEM_SIZE / 2
+    item.vy = 0
+  }
 }
 
 export function isPickedUp(item: Item, player: Player): boolean {
