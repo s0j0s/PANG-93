@@ -208,8 +208,12 @@ export default function GameScreen({ onExit }: Props) {
 
       // 스테이지 클리어 판정
       if (balloonsRef.current.length === 0) {
-        gameStateRef.current = 'stageclear'
-        stageClearTimerRef.current = STAGE_CLEAR_FRAMES
+        if (stageRef.current >= 3) {
+          gameStateRef.current = 'missioncomplete'
+        } else {
+          gameStateRef.current = 'stageclear'
+          stageClearTimerRef.current = STAGE_CLEAR_FRAMES
+        }
         return
       }
 
