@@ -3,6 +3,7 @@ import {
   CANVAS_W, CANVAS_H, FLOOR_Y, PLAYER_SPEED,
   INITIAL_LIVES, INVINCIBLE_FRAMES,
   STAGE_CLEAR_FRAMES, STAGE_BALLOONS,
+  HUD_H, BALLOON_SCORE,
 } from '../game/constants'
 import { drawBackground } from '../game/drawBackground'
 import { drawPlayer, PLAYER_H, PLAYER_W } from '../game/drawPlayer'
@@ -25,17 +26,21 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value))
 }
 
-function drawGameOver(ctx: CanvasRenderingContext2D) {
+function drawGameOver(ctx: CanvasRenderingContext2D, score: number) {
   ctx.fillStyle = 'rgba(0,0,0,0.6)'
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H)
 
   ctx.fillStyle = '#e74c3c'
   ctx.font = '28px "Press Start 2P"'
   ctx.textAlign = 'center'
-  ctx.fillText('GAME OVER', CANVAS_W / 2, CANVAS_H / 2 - 50)
+  ctx.fillText('GAME OVER', CANVAS_W / 2, CANVAS_H / 2 - 70)
+
+  ctx.fillStyle = '#ffffff'
+  ctx.font = '12px "Press Start 2P"'
+  ctx.fillText(`SCORE  ${String(score).padStart(7, '0')}`, CANVAS_W / 2, CANVAS_H / 2 - 20)
 
   const btnX = CANVAS_W / 2 - 130
-  const btnY = CANVAS_H / 2
+  const btnY = CANVAS_H / 2 + 20
   const btnW = 260
   const btnH = 50
 
@@ -62,18 +67,22 @@ function drawStageClear(ctx: CanvasRenderingContext2D, nextStage: number) {
   ctx.fillText(`STAGE ${nextStage} START...`, CANVAS_W / 2, CANVAS_H / 2 + 20)
 }
 
-function drawMissionComplete(ctx: CanvasRenderingContext2D) {
+function drawMissionComplete(ctx: CanvasRenderingContext2D, score: number) {
   ctx.fillStyle = 'rgba(0,0,0,0.7)'
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H)
 
   ctx.fillStyle = '#FFD700'
   ctx.font = '20px "Press Start 2P"'
   ctx.textAlign = 'center'
-  ctx.fillText('MISSION', CANVAS_W / 2, CANVAS_H / 2 - 60)
-  ctx.fillText('COMPLETE', CANVAS_W / 2, CANVAS_H / 2 - 20)
+  ctx.fillText('MISSION', CANVAS_W / 2, CANVAS_H / 2 - 80)
+  ctx.fillText('COMPLETE', CANVAS_W / 2, CANVAS_H / 2 - 40)
+
+  ctx.fillStyle = '#ffffff'
+  ctx.font = '12px "Press Start 2P"'
+  ctx.fillText(`SCORE  ${String(score).padStart(7, '0')}`, CANVAS_W / 2, CANVAS_H / 2 + 10)
 
   const btnX = CANVAS_W / 2 - 130
-  const btnY = CANVAS_H / 2 + 20
+  const btnY = CANVAS_H / 2 + 40
   const btnW = 260
   const btnH = 50
 
@@ -85,8 +94,8 @@ function drawMissionComplete(ctx: CanvasRenderingContext2D) {
   ctx.fillText('MAIN MENU', CANVAS_W / 2, btnY + 32)
 }
 
-const GAME_OVER_BTN      = { x: CANVAS_W / 2 - 130, y: CANVAS_H / 2,      w: 260, h: 50 }
-const MISSION_COMPLETE_BTN = { x: CANVAS_W / 2 - 130, y: CANVAS_H / 2 + 20, w: 260, h: 50 }
+const GAME_OVER_BTN        = { x: CANVAS_W / 2 - 130, y: CANVAS_H / 2 + 20, w: 260, h: 50 }
+const MISSION_COMPLETE_BTN = { x: CANVAS_W / 2 - 130, y: CANVAS_H / 2 + 40, w: 260, h: 50 }
 
 export default function GameScreen({ onExit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -101,6 +110,7 @@ export default function GameScreen({ onExit }: Props) {
   const gameStateRef = useRef<GameState>('playing')
   const stageRef = useRef(1)
   const stageClearTimerRef = useRef(0)
+  const scoreRef = useRef(0)
 
   // ESC → 메인 복귀 / Space → 작살 발사 / Enter → 오버레이 복귀
   useEffect(() => {
@@ -199,6 +209,7 @@ export default function GameScreen({ onExit }: Props) {
           const balloons = balloonsRef.current
           const hitIdx = balloons.findIndex(b => isHit(h, b))
           if (hitIdx !== -1) {
+            scoreRef.current += BALLOON_SCORE[balloons[hitIdx].size]
             const children = splitBalloon(balloons[hitIdx])
             balloons.splice(hitIdx, 1, ...children)
             harpoonRef.current = null
@@ -236,6 +247,29 @@ export default function GameScreen({ onExit }: Props) {
       }
     }
 
+    const drawHUD = () => {
+      ctx.fillStyle = 'rgba(0,0,0,0.4)'
+      ctx.fillRect(0, 0, CANVAS_W, HUD_H)
+
+      ctx.font = '12px "Press Start 2P"'
+      ctx.textBaseline = 'middle'
+      const cy = HUD_H / 2
+
+      ctx.fillStyle = '#e74c3c'
+      ctx.textAlign = 'left'
+      ctx.fillText('♥ '.repeat(Math.max(0, livesRef.current)).trim(), 10, cy)
+
+      ctx.fillStyle = '#ffffff'
+      ctx.textAlign = 'center'
+      ctx.fillText(`STAGE ${stageRef.current}`, CANVAS_W / 2, cy)
+
+      ctx.fillStyle = '#FFD700'
+      ctx.textAlign = 'right'
+      ctx.fillText(String(scoreRef.current).padStart(7, '0'), CANVAS_W - 10, cy)
+
+      ctx.textBaseline = 'alphabetic'
+    }
+
     const draw = () => {
       const p = playerRef.current
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H)
@@ -248,13 +282,15 @@ export default function GameScreen({ onExit }: Props) {
       const playerVisible = inv === 0 || Math.floor(inv / 6) % 2 === 0
       if (playerVisible) drawPlayer(ctx, p.x, p.y)
 
+      drawHUD()
+
       const state = gameStateRef.current
       if (state === 'gameover') {
-        drawGameOver(ctx)
+        drawGameOver(ctx, scoreRef.current)
       } else if (state === 'stageclear') {
         drawStageClear(ctx, stageRef.current + 1)
       } else if (state === 'missioncomplete') {
-        drawMissionComplete(ctx)
+        drawMissionComplete(ctx, scoreRef.current)
       }
     }
 

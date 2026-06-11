@@ -14,6 +14,14 @@ export const GRAVITY = 0.2
 export const INITIAL_LIVES = 3
 export const INVINCIBLE_FRAMES = 120
 export const STAGE_CLEAR_FRAMES = 120
+export const HUD_H = 36
+
+export const BALLOON_SCORE: Record<BalloonSize, number> = {
+  LARGE:  10,
+  MEDIUM: 30,
+  SMALL:  50,
+  TINY:   100,
+}
 
 export const BALLOON_CONFIG = {
   LARGE:  { radius: 40, vx: 0.8, bounceVy: 14, color: '#e74c3c' },
