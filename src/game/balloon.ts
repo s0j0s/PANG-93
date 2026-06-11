@@ -21,10 +21,12 @@ export function createBalloon(size: BalloonSize, x?: number, y?: number): Balloo
   }
 }
 
-export function updateBalloon(b: Balloon): void {
+export function updateBalloon(b: Balloon, speedMult = 1.0): void {
+  if (speedMult === 0) return
+
   b.vy += GRAVITY
-  b.x  += b.vx
-  b.y  += b.vy
+  b.x  += b.vx * speedMult
+  b.y  += b.vy * speedMult
 
   if (b.y + b.radius >= FLOOR_Y) {
     b.y  = FLOOR_Y - b.radius

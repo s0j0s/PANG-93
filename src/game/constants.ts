@@ -1,4 +1,4 @@
-import type { BalloonSize } from './types'
+import type { BalloonSize, ItemType } from './types'
 
 export const CANVAS_W = 480
 export const CANVAS_H = 640
@@ -21,6 +21,20 @@ export const BALLOON_SCORE: Record<BalloonSize, number> = {
   MEDIUM: 30,
   SMALL:  50,
   TINY:   100,
+}
+
+export const ITEM_DROP_CHANCE     = 0.35
+export const ITEM_SIZE            = 28
+export const ITEM_GRAVITY         = 0.3
+export const EFFECT_DURATION      = 300   // 5초
+export const TWIN_HARPOON_DURATION = 600  // 10초
+
+export const ITEM_CONFIG: Record<ItemType, { color: string; label: string }> = {
+  HOURGLASS:    { color: '#e67e22', label: 'SLW' },
+  CLOCK:        { color: '#3498db', label: 'FRZ' },
+  DYNAMITE:     { color: '#e74c3c', label: 'DYN' },
+  FORCEFIELD:   { color: '#2ecc71', label: 'SHD' },
+  TWIN_HARPOON: { color: '#9b59b6', label: 'x2W' },
 }
 
 export const BALLOON_CONFIG = {

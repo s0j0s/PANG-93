@@ -4,6 +4,7 @@ import {
   INITIAL_LIVES, INVINCIBLE_FRAMES,
   STAGE_CLEAR_FRAMES, STAGE_BALLOONS,
   HUD_H, BALLOON_SCORE,
+  ITEM_DROP_CHANCE, EFFECT_DURATION, TWIN_HARPOON_DURATION, ITEM_CONFIG,
 } from '../game/constants'
 import { drawBackground } from '../game/drawBackground'
 import { drawPlayer, PLAYER_H, PLAYER_W } from '../game/drawPlayer'
@@ -12,8 +13,9 @@ import { drawHarpoon } from '../game/drawHarpoon'
 import { createBalloon, updateBalloon, isHit, splitBalloon } from '../game/balloon'
 import { createHarpoon, updateHarpoon } from '../game/harpoon'
 import { isPlayerHit } from '../game/player'
+import { createItem, updateItem, isPickedUp, drawItem } from '../game/item'
 import { useKeys } from '../game/useKeys'
-import type { Player, Balloon, Harpoon } from '../game/types'
+import type { Player, Balloon, Harpoon, Item, ItemType } from '../game/types'
 import '../styles/game.css'
 
 interface Props {
@@ -97,6 +99,8 @@ function drawMissionComplete(ctx: CanvasRenderingContext2D, score: number) {
 const GAME_OVER_BTN        = { x: CANVAS_W / 2 - 130, y: CANVAS_H / 2 + 20, w: 260, h: 50 }
 const MISSION_COMPLETE_BTN = { x: CANVAS_W / 2 - 130, y: CANVAS_H / 2 + 40, w: 260, h: 50 }
 
+const ALL_ITEM_TYPES: ItemType[] = ['HOURGLASS', 'CLOCK', 'DYNAMITE', 'FORCEFIELD', 'TWIN_HARPOON']
+
 export default function GameScreen({ onExit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const keys = useKeys()
@@ -104,7 +108,9 @@ export default function GameScreen({ onExit }: Props) {
   const balloonsRef = useRef<Balloon[]>(
     STAGE_BALLOONS[0].map(c => createBalloon(c.size, c.startX))
   )
-  const harpoonRef = useRef<Harpoon | null>(null)
+  const harpoonsRef = useRef<Harpoon[]>([])
+  const itemsRef = useRef<Item[]>([])
+  const effectRef = useRef<{ type: ItemType; timer: number } | null>(null)
   const livesRef = useRef(INITIAL_LIVES)
   const invincibleRef = useRef(0)
   const gameStateRef = useRef<GameState>('playing')
@@ -120,7 +126,11 @@ export default function GameScreen({ onExit }: Props) {
       } else if (e.key === ' ') {
         e.preventDefault()
         if (gameStateRef.current === 'playing') {
-          harpoonRef.current = createHarpoon(playerRef.current)
+          const isTwin = effectRef.current?.type === 'TWIN_HARPOON'
+          const maxHarpoons = isTwin ? 2 : 1
+          if (harpoonsRef.current.length < maxHarpoons) {
+            harpoonsRef.current.push(createHarpoon(playerRef.current))
+          }
         }
       } else if (e.key === 'Enter') {
         if (gameStateRef.current === 'gameover' || gameStateRef.current === 'missioncomplete') {
@@ -167,9 +177,39 @@ export default function GameScreen({ onExit }: Props) {
     const loadStage = (stage: number) => {
       const configs = STAGE_BALLOONS[stage - 1]
       balloonsRef.current = configs.map(c => createBalloon(c.size, c.startX))
-      harpoonRef.current = null
+      harpoonsRef.current = []
+      itemsRef.current = []
       invincibleRef.current = 0
       playerRef.current = { x: CANVAS_W / 2, y: FLOOR_Y - PLAYER_H }
+    }
+
+    const getSpeedMult = (): number => {
+      const e = effectRef.current
+      if (!e) return 1.0
+      if (e.type === 'CLOCK')     return 0.0
+      if (e.type === 'HOURGLASS') return 0.3
+      return 1.0
+    }
+
+    const applyEffect = (type: ItemType) => {
+      if (type === 'DYNAMITE') {
+        balloonsRef.current = balloonsRef.current.map(b => {
+          const tiny = createBalloon('TINY', b.x, b.y)
+          tiny.vx = b.vx > 0 ? Math.abs(tiny.vx) : -Math.abs(tiny.vx)
+          tiny.vy = b.vy
+          return tiny
+        })
+        return
+      }
+      if (type === 'FORCEFIELD') {
+        invincibleRef.current = EFFECT_DURATION
+        return
+      }
+      if (type === 'TWIN_HARPOON') {
+        effectRef.current = { type, timer: TWIN_HARPOON_DURATION }
+        return
+      }
+      effectRef.current = { type, timer: EFFECT_DURATION }
     }
 
     const update = () => {
@@ -198,22 +238,45 @@ export default function GameScreen({ onExit }: Props) {
       if (right && !left) p.x += PLAYER_SPEED
       p.x = clamp(p.x, PLAYER_W / 2, CANVAS_W - PLAYER_W / 2)
 
-      balloonsRef.current.forEach(updateBalloon)
+      const speedMult = getSpeedMult()
+      balloonsRef.current.forEach(b => updateBalloon(b, speedMult))
 
-      if (harpoonRef.current) {
-        const done = updateHarpoon(harpoonRef.current)
-        if (done) {
-          harpoonRef.current = null
-        } else {
-          const h = harpoonRef.current
-          const balloons = balloonsRef.current
-          const hitIdx = balloons.findIndex(b => isHit(h, b))
-          if (hitIdx !== -1) {
-            scoreRef.current += BALLOON_SCORE[balloons[hitIdx].size]
-            const children = splitBalloon(balloons[hitIdx])
-            balloons.splice(hitIdx, 1, ...children)
-            harpoonRef.current = null
+      // 작살 업데이트 (배열)
+      harpoonsRef.current = harpoonsRef.current.filter(h => {
+        const done = updateHarpoon(h)
+        if (done) return false
+
+        const balloons = balloonsRef.current
+        const hitIdx = balloons.findIndex(b => isHit(h, b))
+        if (hitIdx !== -1) {
+          scoreRef.current += BALLOON_SCORE[balloons[hitIdx].size]
+          // 아이템 드롭
+          if (Math.random() < ITEM_DROP_CHANCE) {
+            const type = ALL_ITEM_TYPES[Math.floor(Math.random() * ALL_ITEM_TYPES.length)]
+            itemsRef.current.push(createItem(type, balloons[hitIdx].x, balloons[hitIdx].y))
           }
+          const children = splitBalloon(balloons[hitIdx])
+          balloons.splice(hitIdx, 1, ...children)
+          return false
+        }
+        return true
+      })
+
+      // 아이템 업데이트 및 획득 판정
+      itemsRef.current = itemsRef.current.filter(item => {
+        if (updateItem(item)) return false   // 바닥 도달
+        if (isPickedUp(item, p)) {
+          applyEffect(item.type)
+          return false
+        }
+        return true
+      })
+
+      // 효과 타이머 감소
+      if (effectRef.current) {
+        effectRef.current.timer--
+        if (effectRef.current.timer <= 0) {
+          effectRef.current = null
         }
       }
 
@@ -263,9 +326,18 @@ export default function GameScreen({ onExit }: Props) {
       ctx.textAlign = 'center'
       ctx.fillText(`STAGE ${stageRef.current}`, CANVAS_W / 2, cy)
 
-      ctx.fillStyle = '#FFD700'
-      ctx.textAlign = 'right'
-      ctx.fillText(String(scoreRef.current).padStart(7, '0'), CANVAS_W - 10, cy)
+      const e = effectRef.current
+      if (e) {
+        const secs = Math.ceil(e.timer / 60)
+        const timeStr = e.type === 'DYNAMITE' ? '' : ` ${secs}s`
+        ctx.fillStyle = ITEM_CONFIG[e.type].color
+        ctx.textAlign = 'right'
+        ctx.fillText(`[${ITEM_CONFIG[e.type].label}${timeStr}]`, CANVAS_W - 10, cy)
+      } else {
+        ctx.fillStyle = '#FFD700'
+        ctx.textAlign = 'right'
+        ctx.fillText(String(scoreRef.current).padStart(7, '0'), CANVAS_W - 10, cy)
+      }
 
       ctx.textBaseline = 'alphabetic'
     }
@@ -275,7 +347,8 @@ export default function GameScreen({ onExit }: Props) {
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H)
       drawBackground(ctx)
       balloonsRef.current.forEach(b => drawBalloon(ctx, b))
-      if (harpoonRef.current) drawHarpoon(ctx, harpoonRef.current)
+      harpoonsRef.current.forEach(h => drawHarpoon(ctx, h))
+      itemsRef.current.forEach(item => drawItem(ctx, item))
 
       // 무적 중 깜빡임
       const inv = invincibleRef.current

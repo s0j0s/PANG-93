@@ -20,3 +20,12 @@ export interface Harpoon {
   y: number
   baseY: number
 }
+
+export type ItemType = 'HOURGLASS' | 'CLOCK' | 'DYNAMITE' | 'FORCEFIELD' | 'TWIN_HARPOON'
+
+export interface Item {
+  x: number
+  y: number
+  vy: number
+  type: ItemType
+}
